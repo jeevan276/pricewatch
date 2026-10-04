@@ -1,0 +1,33 @@
+# Backend environment files
+backend/.env
+backend/.env.*
+!backend/.env.example
+
+# Frontend environment files (if you add them later)
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
+# Python
+backend/__pycache__/
+backend/**/*.py[cod]
+backend/.venv/
+backend/venv/
+
+# Node.js
+frontend/node_modules/
+
+# Build folders
+frontend/dist/
+backend/.pytest_cache/
+backend/.mypy_cache/
+
+# OS / Editor
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+__pycache__/
+*.py[cod]*.txt
+*.txt
