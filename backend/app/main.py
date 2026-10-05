@@ -124,7 +124,7 @@ app = FastAPI(
 
 cors_origins = [
     # Production frontend
-    "https://price-watch-inky.vercel.app",
+    "https://pricewatcha2jp.vercel.app",
 
     # Local development
     "http://localhost:5173",
