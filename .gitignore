@@ -31,3 +31,4 @@ Thumbs.db
 __pycache__/
 *.py[cod]*.txt
 *.txt
+!requirements.txt
