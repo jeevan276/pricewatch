@@ -115,16 +115,18 @@ export default function SignInForm() {
             label="Email"
             type="email"
             value={email}
-            onChange={(val) => {
-              setEmail(val);
+           onChange={(val) => {
+  setEmail(val);
 
-              if (fieldErrors.email) {
-                setFieldErrors((prev) => ({
-                  ...prev,
-                  email: undefined,
-                }));
-              }
-            }}
+  const result = loginSchema.shape.email.safeParse(val);
+
+  setFieldErrors((prev) => ({
+    ...prev,
+    email: result.success
+      ? undefined
+      : result.error.issues[0]?.message,
+  }));
+}}
             placeholder="you@example.com"
             autoComplete="email"
           />

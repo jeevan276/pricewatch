@@ -10,7 +10,6 @@ from sqlalchemy.orm import Session
 from app.crud.user import get_user_by_id
 from app.database.database import get_db
 
-
 # ============================================================
 # JWT CONFIGURATION
 # ============================================================
@@ -18,9 +17,7 @@ from app.database.database import get_db
 SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 
 if not SECRET_KEY:
-    raise RuntimeError(
-        "JWT_SECRET_KEY is not configured."
-    )
+    raise RuntimeError("JWT_SECRET_KEY is not configured.")
 
 ALGORITHM = "HS256"
 
@@ -42,6 +39,7 @@ security = HTTPBearer(
 # ============================================================
 # AUTHENTICATION ERROR
 # ============================================================
+
 
 def authentication_error() -> HTTPException:
     """
@@ -65,6 +63,7 @@ def authentication_error() -> HTTPException:
 # PASSWORD HASH
 # ============================================================
 
+
 def hash_password(password: str) -> str:
     """
     Hash a password using bcrypt.
@@ -75,21 +74,15 @@ def hash_password(password: str) -> str:
     """
 
     if not isinstance(password, str):
-        raise ValueError(
-            "Password must be a string."
-        )
+        raise ValueError("Password must be a string.")
 
     password_bytes = password.encode("utf-8")
 
     if len(password_bytes) > 72:
-        raise ValueError(
-            "Password is too long."
-        )
+        raise ValueError("Password is too long.")
 
     if len(password_bytes) == 0:
-        raise ValueError(
-            "Password cannot be empty."
-        )
+        raise ValueError("Password cannot be empty.")
 
     return bcrypt.hashpw(
         password_bytes,
@@ -100,6 +93,7 @@ def hash_password(password: str) -> str:
 # ============================================================
 # VERIFY PASSWORD
 # ============================================================
+
 
 def verify_password(
     plain_password: str,
@@ -127,15 +121,14 @@ def verify_password(
             hashed_password.encode("utf-8"),
         )
 
-    except (
-        ValueError,
-        TypeError,
-    ):
+    except (ValueError, TypeError, bcrypt.Error):
         return False
+
 
 # ============================================================
 # CREATE ACCESS TOKEN
 # ============================================================
+
 
 def create_access_token(
     user_id: int,
@@ -145,9 +138,7 @@ def create_access_token(
     """
 
     if not isinstance(user_id, int) or user_id <= 0:
-        raise ValueError(
-            "Invalid user ID."
-        )
+        raise ValueError("Invalid user ID.")
 
     now = datetime.now(timezone.utc)
 
@@ -173,10 +164,9 @@ def create_access_token(
 # GET CURRENT USER
 # ============================================================
 
+
 def get_current_user(
-    credentials: HTTPAuthorizationCredentials | None = Depends(
-        security
-    ),
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
     db: Session = Depends(get_db),
 ):
     """
@@ -262,4 +252,3 @@ def get_current_user(
         raise credentials_exception
 
     return user
-

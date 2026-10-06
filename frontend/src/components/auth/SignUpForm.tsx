@@ -116,15 +116,17 @@ export default function SignUpForm() {
             placeholder="you@example.com"
             autoComplete="email"
             onChange={(val) => {
-              setEmail(val);
+  setEmail(val);
 
-              if (fieldErrors.email) {
-                setFieldErrors((prev) => ({
-                  ...prev,
-                  email: undefined,
-                }));
-              }
-            }}
+  const result = signUpSchema.shape.email.safeParse(val);
+
+  setFieldErrors((prev) => ({
+    ...prev,
+    email: result.success
+      ? undefined
+      : result.error.issues[0]?.message,
+  }));
+}}
           />
 
           {fieldErrors.email && (

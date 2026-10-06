@@ -22,7 +22,10 @@ class BaseScraper(ABC):
         return await self.scrape_product(url)
 
     @staticmethod
-    def normalize_url(base_url: str, relative_url: str | None) -> str | None:
+    def normalize_url(
+        base_url: str,
+        relative_url: str | None,
+    ) -> str | None:
         """
         Convert relative/protocol-relative URLs into absolute URLs.
         """
@@ -30,11 +33,20 @@ class BaseScraper(ABC):
             return None
 
         clean_relative = relative_url.strip()
+
         if not clean_relative:
             return None
 
         if clean_relative.startswith("//"):
-            scheme = "https:" if base_url.startswith("https:") else "http:"
+            scheme = (
+                "https:"
+                if base_url.startswith("https:")
+                else "http:"
+            )
+
             return scheme + clean_relative
 
-        return urljoin(base_url, clean_relative)
+        return urljoin(
+            base_url,
+            clean_relative,
+        )

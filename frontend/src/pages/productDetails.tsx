@@ -27,19 +27,26 @@ function ProductDetailsContent({
 }: {
   id: string | undefined;
 }) {
-  const [data, setData] = useState<ProductHistoryResponse | null>(null);
+  const [data, setData] =
+    useState<ProductHistoryResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] =
+    useState<string | null>(null);
 
-  const [showFullName, setShowFullName] = useState(false);
-  const [isNameTruncated, setIsNameTruncated] = useState(false);
+  const [showFullName, setShowFullName] =
+    useState(false);
+  const [isNameTruncated, setIsNameTruncated] =
+    useState(false);
 
   const [checking, setChecking] = useState(false);
-  const [checkError, setCheckError] = useState<string | null>(null);
+  const [checkError, setCheckError] =
+    useState<string | null>(null);
 
-  const [savingThreshold, setSavingThreshold] = useState(false);
+  const [savingThreshold, setSavingThreshold] =
+    useState(false);
 
-  const titleRef = useRef<HTMLHeadingElement>(null);
+  const titleRef =
+    useRef<HTMLHeadingElement>(null);
   const requests = useRef(0);
   const pendingCheck = useRef(false);
   const pendingThreshold = useRef(false);
@@ -62,7 +69,8 @@ function ProductDetailsContent({
    */
   const productId = id ? Number(id) : NaN;
   const isValidProductId =
-    Number.isSafeInteger(productId) && productId > 0;
+    Number.isSafeInteger(productId) &&
+    productId > 0;
 
   /*
    * Check product price immediately.
@@ -84,7 +92,8 @@ function ProductDetailsContent({
     setCheckError(null);
 
     try {
-      const response = await checkProductNow(productId);
+      const response =
+        await checkProductNow(productId);
 
       if (
         mounted.current &&
@@ -111,7 +120,9 @@ function ProductDetailsContent({
   /*
    * Save or remove target price.
    */
-  const saveThreshold = async (target: number | null) => {
+  const saveThreshold = async (
+    target: number | null
+  ) => {
     if (
       !isValidProductId ||
       pendingCheck.current ||
@@ -129,10 +140,11 @@ function ProductDetailsContent({
     setSavingThreshold(true);
 
     try {
-      const product = await setProductThreshold(
-        productId,
-        target
-      );
+      const product =
+        await setProductThreshold(
+          productId,
+          target
+        );
 
       if (mounted.current) {
         setData((current) =>
@@ -182,9 +194,8 @@ function ProductDetailsContent({
 
         setError(null);
 
-        const response = await getProductHistory(
-          productId
-        );
+        const response =
+          await getProductHistory(productId);
 
         if (
           active &&
@@ -242,15 +253,15 @@ function ProductDetailsContent({
 
     const checkTruncation = () => {
       setIsNameTruncated(
-        element.scrollHeight > element.clientHeight + 1
+        element.scrollHeight >
+          element.clientHeight + 1
       );
     };
 
     checkTruncation();
 
-    const resizeObserver = new ResizeObserver(
-      checkTruncation
-    );
+    const resizeObserver =
+      new ResizeObserver(checkTruncation);
 
     resizeObserver.observe(element);
 
@@ -307,7 +318,12 @@ function ProductDetailsContent({
 
   const { product, history } = data;
 
+  /*
+   * Resolve retailer from the product URL.
+   */
   const buyingLink = retailerLink(product.url);
+  const retailerName =
+    buyingLink?.name || "the retailer";
 
   /*
    * Price statistics.
@@ -343,7 +359,9 @@ function ProductDetailsContent({
   const previousPrice =
     sortedHistory.length > 1
       ? Number(
-          sortedHistory[sortedHistory.length - 2].price
+          sortedHistory[
+            sortedHistory.length - 2
+          ].price
         )
       : currentPrice;
 
@@ -374,11 +392,7 @@ function ProductDetailsContent({
     product.availability === "out_of_stock";
 
   const availabilityMessage = isRemoved
-    ? `This product has been removed from ${
-        product.url.includes("daraz.com.np")
-          ? "Daraz"
-          : "the retailer"
-      }. The price shown is the last recorded price.`
+    ? `This product has been removed from ${retailerName}. The price shown is the last recorded price.`
     : isOutOfStock
       ? "This product is currently out of stock."
       : product.availability === "available"
@@ -506,7 +520,9 @@ function ProductDetailsContent({
           <div className="space-y-2">
 
             <p
-              role={isRemoved ? "status" : undefined}
+              role={
+                isRemoved ? "status" : undefined
+              }
               className={`font-semibold ${
                 isRemoved
                   ? "text-destructive"
@@ -673,4 +689,3 @@ function MessageState({
     </div>
   );
 }
-

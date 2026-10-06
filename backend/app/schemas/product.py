@@ -121,25 +121,58 @@ class ProductHistoryResponse(BaseModel):
 
 class ProductCompareRequest(BaseModel):
     daraz_url: HttpUrl | None = None
-    onlinesaathi_url: HttpUrl | None = Field(default=None, validation_alias=AliasChoices("onlinesaathi_url", "onlinesathi_url"))
+
+    onlinesaathi_url: HttpUrl | None = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "onlinesaathi_url",
+            "onlinesathi_url",
+        ),
+    )
+
     hamrobazar_url: HttpUrl | None = None
 
+    mychoice_url: HttpUrl | None = None
 
     @model_validator(mode="after")
     def valid_comparison(self):
         from urllib.parse import urlparse
-        fields = {"daraz_url": "daraz.com.np", "onlinesaathi_url": "onlinesaathi.com", "hamrobazar_url": "hamrobazaar.com"}
-        if sum(getattr(self, field) is not None for field in fields) < 2:
-            raise ValueError("Provide at least two product URLs to compare.")
+
+        fields = {
+            "daraz_url": "daraz.com.np",
+            "onlinesaathi_url": "onlinesaathi.com",
+            "hamrobazar_url": "hamrobazaar.com",
+            "mychoice_url": "my-choice-ecom.vercel.app",
+        }
+
+        if sum(
+            getattr(self, field) is not None
+            for field in fields
+        ) < 2:
+            raise ValueError(
+                "Provide at least two product URLs to compare."
+            )
+
         for field, domain in fields.items():
             value = getattr(self, field)
+
             if value is None:
                 continue
-            parsed = urlparse(str(value))
-            if parsed.hostname.removeprefix("www.") != domain or parsed.username or parsed.password or parsed.port not in (None, 80, 443):
-                raise ValueError(f"{field} must contain a product URL from {domain}.")
-        return self
 
+            parsed = urlparse(str(value))
+
+            if (
+                parsed.hostname is None
+                or parsed.hostname.removeprefix("www.") != domain
+                or parsed.username
+                or parsed.password
+                or parsed.port not in (None, 80, 443)
+            ):
+                raise ValueError(
+                    f"{field} must contain a product URL from {domain}."
+                )
+
+        return self
 
 class ComparisonOffer(BaseModel):
     site: str

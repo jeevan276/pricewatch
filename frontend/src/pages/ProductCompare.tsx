@@ -40,6 +40,12 @@ const websites: WebsiteOption[] = [
     placeholder: "Paste OnlineSathi product URL",
     domain: "onlinesaathi.com",
   },
+  {
+    key: "mychoice_url",
+    name: "MyChoice",
+    placeholder: "Paste MyChoice product URL",
+    domain: "my-choice-ecom.vercel.app",
+  },
 ];
 
 const getWebsite = (
@@ -77,9 +83,7 @@ const isValidSupportedUrl = (
       .toLowerCase()
       .replace(/^www\./, "");
 
-    return (
-      hostname === website.domain
-    );
+    return hostname === website.domain;
   } catch {
     return false;
   }
@@ -294,6 +298,7 @@ export default function ProductCompare() {
 
   const handleCompare = async () => {
     if (loading) return;
+
     setError(null);
     setResult(null);
 
@@ -419,8 +424,8 @@ export default function ProductCompare() {
           </p>
 
           <p className="mt-1 text-sm text-muted-foreground">
-            Supported websites: Daraz, Hamrobazaar, and
-            OnlineSathi.
+            Supported websites: Daraz, Hamrobazaar,
+            OnlineSathi, and MyChoice.
           </p>
         </div>
 
@@ -448,7 +453,7 @@ export default function ProductCompare() {
             prices.
           </p>
 
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {websites.map((website) => {
               const selected =
                 selectedSites.includes(
@@ -785,14 +790,6 @@ export default function ProductCompare() {
                       site.status ===
                       "different_product";
 
-                    /*
-                     * Cheapest/highest are already calculated
-                     * by the backend using ONLY matched products.
-                     *
-                     * We additionally require the current site
-                     * to have status "matched" before displaying
-                     * comparison badges.
-                     */
                     const isMatchedProduct =
                       site.status === "matched";
 
@@ -1126,4 +1123,3 @@ export default function ProductCompare() {
     </main>
   );
 }
-

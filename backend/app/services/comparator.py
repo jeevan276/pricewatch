@@ -7,7 +7,6 @@ from urllib.parse import urlparse
 
 from app.services.scraper import get_scraper, scrape_product, normalize_product_url
 
-
 # ============================================================
 # SUPPORTED COMPARISON DOMAINS
 # ============================================================
@@ -16,6 +15,7 @@ SUPPORTED_COMPARISON_DOMAINS = {
     "daraz.com.np",
     "hamrobazaar.com",
     "onlinesaathi.com",
+    "my-choice-ecom.vercel.app",
 }
 
 
@@ -137,6 +137,7 @@ NOISE_WORDS = {
 # NORMALIZATION
 # ============================================================
 
+
 def normalize_product_name(name: str) -> str:
     """
     Normalize a product name for comparison.
@@ -194,6 +195,7 @@ def extract_product_tokens(name: str) -> set[str]:
 # MEMORY / STORAGE SIZE NORMALIZATION
 # ============================================================
 
+
 def normalize_size(value: str) -> str | None:
     if not value or not str(value).strip():
         return None
@@ -220,6 +222,7 @@ def normalize_size(value: str) -> str | None:
 # ============================================================
 # IMPORTANT PRODUCT ATTRIBUTES
 # ============================================================
+
 
 def extract_attributes(name: str) -> dict[str, Any]:
     normalized = normalize_product_name(name)
@@ -265,27 +268,34 @@ def extract_attributes(name: str) -> dict[str, Any]:
     model_text = str(name).lower()
     for match in re.finditer(memory_pattern, model_text):
         ram, storage = int(match[1]), int(match[2])
-        if match[3] == 'tb':
+        if match[3] == "tb":
             storage *= 1024
-        result['ram'].add(f'{ram}gb')
-        result['storage'].add(f'{storage}gb')
-    model_text = re.sub(memory_pattern, ' ', model_text)
+        result["ram"].add(f"{ram}gb")
+        result["storage"].add(f"{storage}gb")
+    model_text = re.sub(memory_pattern, " ", model_text)
     explicit_memory = r"\b(\d+)\s*(gb|tb)\b"
     for match in re.finditer(explicit_memory, model_text):
-        number = int(match[1]) * (1024 if match[2] == 'tb' else 1)
+        number = int(match[1]) * (1024 if match[2] == "tb" else 1)
         # 32/64 GB standalone tokens are storage; explicit RAM labels win.
-        before = model_text[:match.start()]
-        after = model_text[match.end():]
-        prefix_ram = bool(re.search(r'\bram\s*$', before)) and not re.search(r'\d+\s*(?:gb|tb)\s+ram\s*$', before)
-        suffix_ram = bool(re.match(r'\s*ram\b', after))
+        before = model_text[: match.start()]
+        after = model_text[match.end() :]
+        prefix_ram = bool(re.search(r"\bram\s*$", before)) and not re.search(
+            r"\d+\s*(?:gb|tb)\s+ram\s*$", before
+        )
+        suffix_ram = bool(re.match(r"\s*ram\b", after))
         if prefix_ram or suffix_ram or number < 32:
-            result['ram'].add(f'{number}gb')
+            result["ram"].add(f"{number}gb")
         else:
-            result['storage'].add(f'{number}gb')
-    model_text = re.sub(explicit_memory, ' ', model_text)
-    ignored_tokens = KNOWN_BRANDS | NETWORK_WORDS | VARIANT_WORDS | NOISE_WORDS | {
-        'gb', 'tb', 'ram', 'rom', 'storage', 'memory', 'wifi', 'lte'}
-    result['model'] = set(normalize_product_name(model_text).split()) - ignored_tokens
+            result["storage"].add(f"{number}gb")
+    model_text = re.sub(explicit_memory, " ", model_text)
+    ignored_tokens = (
+        KNOWN_BRANDS
+        | NETWORK_WORDS
+        | VARIANT_WORDS
+        | NOISE_WORDS
+        | {"gb", "tb", "ram", "rom", "storage", "memory", "wifi", "lte"}
+    )
+    result["model"] = set(normalize_product_name(model_text).split()) - ignored_tokens
 
     return result
 
@@ -298,6 +308,7 @@ def extract_model_tokens(name: str) -> set[str]:
 # DEBUG ATTRIBUTE PRINT
 # ============================================================
 
+
 def print_product_comparison(
     reference_name: str,
     candidate_name: str,
@@ -308,28 +319,18 @@ def print_product_comparison(
     reference_model = reference["model"]
     candidate_model = candidate["model"]
 
-    common_model = reference_model.intersection(
-        candidate_model
-    )
+    common_model = reference_model.intersection(candidate_model)
 
     if reference_model or candidate_model:
         model_union = reference_model.union(candidate_model)
 
-        model_score = (
-            len(common_model) / len(model_union)
-            if model_union
-            else 0.0
-        )
+        model_score = len(common_model) / len(model_union) if model_union else 0.0
     else:
         model_score = 1.0
 
-    print(
-        "\n============================================================"
-    )
+    print("\n============================================================")
     print("PRODUCT COMPARISON")
-    print(
-        "============================================================"
-    )
+    print("============================================================")
 
     print(f"REFERENCE: {reference_name}")
     print(f"CANDIDATE: {candidate_name}")
@@ -358,6 +359,7 @@ def print_product_comparison(
 # PRODUCT SIMILARITY
 # ============================================================
 
+
 def product_similarity(
     reference_name: str,
     candidate_name: str,
@@ -373,19 +375,11 @@ def product_similarity(
     # --------------------------------------------------------
 
     if reference_model and candidate_model:
-        common_model = reference_model.intersection(
-            candidate_model
-        )
+        common_model = reference_model.intersection(candidate_model)
 
-        model_union = reference_model.union(
-            candidate_model
-        )
+        model_union = reference_model.union(candidate_model)
 
-        model_score = (
-            len(common_model) / len(model_union)
-            if model_union
-            else 1.0
-        )
+        model_score = len(common_model) / len(model_union) if model_union else 1.0
 
     elif not reference_model and not candidate_model:
         model_score = 1.0
@@ -393,13 +387,8 @@ def product_similarity(
     else:
         model_score = 0.0
 
-    print(
-        f"\nMODEL COMMON: "
-        f"{reference_model.intersection(candidate_model)}"
-    )
-    print(
-        f"MODEL SCORE: {round(model_score, 3)}"
-    )
+    print(f"\nMODEL COMMON: " f"{reference_model.intersection(candidate_model)}")
+    print(f"MODEL SCORE: {round(model_score, 3)}")
 
     # --------------------------------------------------------
     # BRAND
@@ -410,10 +399,7 @@ def product_similarity(
 
     if reference_brand and candidate_brand:
         if not reference_brand.intersection(candidate_brand):
-            print(
-                "RESULT: DIFFERENT\n"
-                "REASON: BRAND MISMATCH"
-            )
+            print("RESULT: DIFFERENT\n" "REASON: BRAND MISMATCH")
             return 0.0
 
         brand_score = 1.0
@@ -430,17 +416,11 @@ def product_similarity(
 
     if reference_ram:
         if not candidate_ram:
-            print(
-                "RESULT: DIFFERENT\n"
-                "REASON: CANDIDATE RAM UNKNOWN"
-            )
+            print("RESULT: DIFFERENT\n" "REASON: CANDIDATE RAM UNKNOWN")
             return 0.0
 
         if not reference_ram.intersection(candidate_ram):
-            print(
-                "RESULT: DIFFERENT\n"
-                "REASON: RAM MISMATCH"
-            )
+            print("RESULT: DIFFERENT\n" "REASON: RAM MISMATCH")
             return 0.0
 
         ram_score = 1.0
@@ -457,19 +437,11 @@ def product_similarity(
 
     if reference_storage:
         if not candidate_storage:
-            print(
-                "RESULT: DIFFERENT\n"
-                "REASON: CANDIDATE STORAGE UNKNOWN"
-            )
+            print("RESULT: DIFFERENT\n" "REASON: CANDIDATE STORAGE UNKNOWN")
             return 0.0
 
-        if not reference_storage.intersection(
-            candidate_storage
-        ):
-            print(
-                "RESULT: DIFFERENT\n"
-                "REASON: STORAGE MISMATCH"
-            )
+        if not reference_storage.intersection(candidate_storage):
+            print("RESULT: DIFFERENT\n" "REASON: STORAGE MISMATCH")
             return 0.0
 
         storage_score = 1.0
@@ -502,17 +474,11 @@ def product_similarity(
 
     elif reference_network is None:
         network_score = 0.5
-        print(
-            "NETWORK RESULT: "
-            "REFERENCE UNKNOWN - ALLOWED"
-        )
+        print("NETWORK RESULT: " "REFERENCE UNKNOWN - ALLOWED")
 
     else:
         network_score = 0.5
-        print(
-            "NETWORK RESULT: "
-            "CANDIDATE UNKNOWN - ALLOWED"
-        )
+        print("NETWORK RESULT: " "CANDIDATE UNKNOWN - ALLOWED")
 
     # --------------------------------------------------------
     # VARIANT
@@ -532,15 +498,20 @@ def product_similarity(
     # require substantial overlap.
     if reference_model and candidate_model:
         if model_score < 0.60:
-            print(
-                "RESULT: DIFFERENT\n"
-                "REASON: DIFFERENT MODEL"
-            )
+            print("RESULT: DIFFERENT\n" "REASON: DIFFERENT MODEL")
             return 0.0
 
-    reference_numbers = {token for token in reference_model if any(char.isdigit() for char in token)}
-    candidate_numbers = {token for token in candidate_model if any(char.isdigit() for char in token)}
-    if reference_numbers and candidate_numbers and reference_numbers != candidate_numbers:
+    reference_numbers = {
+        token for token in reference_model if any(char.isdigit() for char in token)
+    }
+    candidate_numbers = {
+        token for token in candidate_model if any(char.isdigit() for char in token)
+    }
+    if (
+        reference_numbers
+        and candidate_numbers
+        and reference_numbers != candidate_numbers
+    ):
         return 0.0
 
     # --------------------------------------------------------
@@ -566,6 +537,7 @@ def product_similarity(
 # SAME PRODUCT
 # ============================================================
 
+
 def is_same_product(
     reference_name: str,
     candidate_name: str,
@@ -589,6 +561,7 @@ def is_same_product(
 # ============================================================
 # COMPARE PRICES
 # ============================================================
+
 
 def compare_prices(
     products: list[dict[str, Any]],
@@ -642,10 +615,7 @@ def compare_prices(
     cheapest = offers[0]
     highest = offers[-1]
 
-    difference = (
-        float(highest["price"])
-        - float(cheapest["price"])
-    )
+    difference = float(highest["price"]) - float(cheapest["price"])
 
     return {
         "product": cheapest.get("name"),
@@ -659,6 +629,7 @@ def compare_prices(
 # ============================================================
 # ASYNC WORKER FOR URL SCRAPING
 # ============================================================
+
 
 async def _scrape_site_url(
     site: str,
@@ -694,9 +665,21 @@ async def _scrape_site_url(
     # SCRAPER VALIDATION
     # --------------------------------------------------------
 
-    site_domain = {'Daraz': 'daraz.com.np', 'OnlineSaathi': 'onlinesaathi.com', 'HamroBazar': 'hamrobazaar.com'}.get(site)
-    if site_domain and urlparse(clean_url).hostname.removeprefix('www.') != site_domain:
-        return {'site': site, 'status': 'unsupported', 'name': None, 'price': None, 'url': clean_url, 'image_url': None}
+    site_domain = {
+        "Daraz": "daraz.com.np",
+        "OnlineSaathi": "onlinesaathi.com",
+        "HamroBazar": "hamrobazaar.com",
+        "MyChoice": "my-choice-ecom.vercel.app",
+    }.get(site)
+    if site_domain and urlparse(clean_url).hostname.removeprefix("www.") != site_domain:
+        return {
+            "site": site,
+            "status": "unsupported",
+            "name": None,
+            "price": None,
+            "url": clean_url,
+            "image_url": None,
+        }
     try:
         get_scraper(clean_url)
     except ValueError:
@@ -710,13 +693,9 @@ async def _scrape_site_url(
         }
 
     try:
-        print(
-            "\n============================================================"
-        )
+        print("\n============================================================")
         print(f"COMPARING {site}")
-        print(
-            "============================================================"
-        )
+        print("============================================================")
         print(f"URL: {clean_url}")
 
         scraped = await scrape_product(clean_url)
@@ -800,10 +779,7 @@ async def _scrape_site_url(
         }
 
     except Exception as exc:
-        print(
-            f"\nCOMPARISON FAILED - {site}: "
-            f"{clean_url}"
-        )
+        print(f"\nCOMPARISON FAILED - {site}: " f"{clean_url}")
         print(f"ERROR: {exc}")
 
         return {
@@ -820,21 +796,17 @@ async def _scrape_site_url(
 # COMPARE PRODUCT URLS
 # ============================================================
 
+
 async def compare_product_urls(
     urls: dict[str, str | None],
 ) -> dict[str, Any]:
     # Concurrent scraping is intentionally preserved.
-    tasks = [
-        _scrape_site_url(site, url)
-        for site, url in urls.items()
-    ]
+    tasks = [_scrape_site_url(site, url) for site, url in urls.items()]
 
     site_results = await asyncio.gather(*tasks)
 
     scraped_products = [
-        result
-        for result in site_results
-        if result.get("status") == "found"
+        result for result in site_results if result.get("status") == "found"
     ]
 
     if not scraped_products:
@@ -857,6 +829,7 @@ async def compare_product_urls(
         "daraz",
         "onlinesaathi",
         "hamrobazar",
+        "mychoice",
     ]
 
     for reference_site in reference_order:
@@ -871,19 +844,13 @@ async def compare_product_urls(
     if reference_product is None:
         reference_product = scraped_products[0]
 
-    print(
-        "\n============================================================"
-    )
+    print("\n============================================================")
     print("REFERENCE PRODUCT")
-    print(
-        "============================================================"
-    )
+    print("============================================================")
     print(f"SITE: {reference_product['site']}")
     print(f"NAME: {reference_product['name']}")
     print(f"PRICE: {reference_product['price']}")
-    print(
-        "============================================================"
-    )
+    print("============================================================")
 
     # The reference product is always considered matched
     # with itself.
@@ -899,23 +866,13 @@ async def compare_product_urls(
         if product is reference_product:
             continue
 
-        print(
-            "\n============================================================"
-        )
+        print("\n============================================================")
         print("PRODUCT MATCH CHECK")
-        print(
-            "============================================================"
-        )
+        print("============================================================")
 
-        print(
-            f"REFERENCE: "
-            f"{reference_product['name']}"
-        )
+        print(f"REFERENCE: " f"{reference_product['name']}")
 
-        print(
-            f"CANDIDATE: "
-            f"{product['name']}"
-        )
+        print(f"CANDIDATE: " f"{product['name']}")
 
         print_product_comparison(
             reference_product["name"],
@@ -932,9 +889,7 @@ async def compare_product_urls(
 
             matched_products.append(product)
 
-            print(
-                f"{product['site']}: MATCHED"
-            )
+            print(f"{product['site']}: MATCHED")
 
         else:
             # IMPORTANT:
@@ -943,10 +898,7 @@ async def compare_product_urls(
             # to matched_products.
             product["status"] = "different_product"
 
-            print(
-                f"{product['site']}: "
-                "DIFFERENT PRODUCT"
-            )
+            print(f"{product['site']}: " "DIFFERENT PRODUCT")
 
     # ========================================================
     # PRICE COMPARISON

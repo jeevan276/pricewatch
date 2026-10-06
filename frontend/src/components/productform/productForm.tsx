@@ -1,12 +1,58 @@
 import { useState } from "react";
+
 import type { ProductTrackResponse } from "../../types/product";
 
 interface ProductFormProps {
   addProduct: (
     url: string,
   ) => Promise<ProductTrackResponse | null>;
-
   loading: boolean;
+}
+
+const SUPPORTED_DOMAINS = [
+  "daraz.com.np",
+  "hamrobazaar.com",
+  "onlinesaathi.com",
+  "my-choice-ecom.vercel.app",
+];
+
+function validateProductUrl(value: string): string | null {
+  const trimmedUrl = value.trim();
+
+  if (!trimmedUrl) {
+    return null;
+  }
+
+  try {
+    const parsedUrl = new URL(trimmedUrl);
+
+    if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+      return "URL must use HTTP or HTTPS.";
+    }
+
+    if (parsedUrl.username || parsedUrl.password) {
+      return "URL must not contain username or password.";
+    }
+
+    if (
+      parsedUrl.port &&
+      !["80", "443"].includes(parsedUrl.port)
+    ) {
+      return "URL must use port 80 or 443.";
+    }
+
+    const hostname = parsedUrl.hostname
+      .toLowerCase()
+      .replace(/^www\./, "");
+
+    if (!SUPPORTED_DOMAINS.includes(hostname)) {
+      return "Unsupported website. Use Daraz, HamroBazar, OnlineSaathi, or MyChoice.";
+    }
+
+    return null;
+  } catch {
+    return "Please enter a valid product URL.";
+  }
 }
 
 export default function ProductForm({
@@ -16,15 +62,36 @@ export default function ProductForm({
   const [url, setUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
 
+  const handleUrlChange = (value: string) => {
+    setUrl(value);
+
+    const trimmedValue = value.trim();
+
+    // Do not show an error for an empty field while typing.
+    if (!trimmedValue) {
+      setError(null);
+      return;
+    }
+
+    // Validate immediately on every change.
+    setError(validateProductUrl(trimmedValue));
+  };
+
   const handleSubmit = async (
-    e: React.FormEvent,
+    e: React.FormEvent<HTMLFormElement>,
   ) => {
     e.preventDefault();
 
     const trimmedUrl = url.trim();
+    const validationError = validateProductUrl(trimmedUrl);
 
     if (!trimmedUrl) {
       setError("Please enter a product URL.");
+      return;
+    }
+
+    if (validationError) {
+      setError(validationError);
       return;
     }
 
@@ -35,6 +102,7 @@ export default function ProductForm({
 
       if (response) {
         setUrl("");
+        setError(null);
       } else {
         setError("Failed to track product.");
       }
@@ -65,21 +133,19 @@ export default function ProductForm({
           sm:items-stretch
         "
       >
-        {/* Product URL Input */}
         <div className="min-w-0 flex-1">
           <input
             type="url"
             value={url}
-            onChange={(e) => setUrl(e.target.value)}
+            onChange={(e) => handleUrlChange(e.target.value)}
             placeholder="Paste product URL..."
-            className="
+            className={`
               block
               h-12
               w-full
               min-w-0
               rounded-lg
               border
-              border-gray-300
               bg-background
               px-3
               py-3
@@ -88,21 +154,28 @@ export default function ProductForm({
               placeholder:text-muted-foreground
               focus:outline-none
               focus:ring-2
-              focus:ring-muted-foreground
               focus:ring-offset-2
               disabled:cursor-not-allowed
               disabled:opacity-50
               sm:text-base
-            "
+              ${
+                error
+                  ? "border-red-500 focus:ring-red-500"
+                  : "border-gray-300 focus:ring-muted-foreground"
+              }
+            `}
             disabled={loading}
             required
+            aria-invalid={Boolean(error)}
+            aria-describedby={
+              error ? "product-url-error" : undefined
+            }
           />
         </div>
 
-        {/* Track Product Button */}
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || Boolean(error) || !url.trim()}
           className="
             h-12
             w-full
@@ -132,9 +205,10 @@ export default function ProductForm({
         </button>
       </form>
 
-      {/* Error Message */}
       {error && (
         <p
+          id="product-url-error"
+          role="alert"
           className="
             mt-3
             break-words

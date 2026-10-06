@@ -1,11 +1,12 @@
 interface AuthFieldProps {
   id: string;
   label: string;
-type: React.HTMLInputTypeAttribute;
+  type: React.HTMLInputTypeAttribute;
   value: string;
   placeholder: string;
   autoComplete: string;
   onChange: (value: string) => void;
+  error?: string;
 }
 
 const INPUT_CLASS_NAME =

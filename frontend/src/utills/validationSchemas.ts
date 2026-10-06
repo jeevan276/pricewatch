@@ -1,23 +1,32 @@
 import { z } from "zod";
 
 // ============================================================
+// EMAIL VALIDATION
+// ============================================================
+
+const emailSchema = z
+  .string()
+  .trim()
+  .min(1, {
+    message: "Email address is required.",
+  })
+  .max(320, {
+    message: "Email address is too long.",
+  })
+  .refine((value) => value === value.toLowerCase(), {
+    message: "Email must contain only lowercase letters.",
+  })
+  .email({
+    message: "Please enter a valid email address.",
+  });
+
+// ============================================================
 // SIGN UP
 // ============================================================
 
 export const signUpSchema = z
   .object({
-    email: z
-      .string()
-      .trim()
-      .min(1, {
-        message: "Email address is required.",
-      })
-      .max(320, {
-        message: "Email address is too long.",
-      })
-      .email({
-        message: "Please enter a valid email address.",
-      }),
+    email: emailSchema,
 
     password: z
       .string()
@@ -59,24 +68,12 @@ export const signUpSchema = z
 
 export type SignUpFormData = z.infer<typeof signUpSchema>;
 
-
 // ============================================================
 // SIGN IN
 // ============================================================
 
 export const loginSchema = z.object({
-  email: z
-    .string()
-    .trim()
-    .min(1, {
-      message: "Email address is required.",
-    })
-    .max(320, {
-      message: "Email address is too long.",
-    })
-    .email({
-      message: "Please enter a valid email address.",
-    }),
+  email: emailSchema,
 
   password: z
     .string()
@@ -89,4 +86,3 @@ export const loginSchema = z.object({
 });
 
 export type LoginFormData = z.infer<typeof loginSchema>;
-

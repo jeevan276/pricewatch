@@ -53,6 +53,7 @@ export interface ProductCompareRequest {
   daraz_url?: string;
   onlinesaathi_url?: string;
   hamrobazar_url?: string;
+  mychoice_url?: string;
 }
 
 export type CompareSiteStatus =
